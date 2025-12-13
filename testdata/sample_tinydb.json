@@ -1,0 +1,103 @@
+{
+  "activities": {
+    "1": {
+      "_id": 1,
+      "name": "Summer Retreat 2024",
+      "description": "Annual summer retreat for the community",
+      "date": "2024-07-15T09:00:00",
+      "location": "Camp Sunshine",
+      "activity_type": "event",
+      "status": "active",
+      "requires_registration": true,
+      "is_free": false,
+      "fee": 75.00,
+      "max_capacity": 50,
+      "created_at": "2024-01-10T10:00:00",
+      "updated_at": "2024-01-10T10:00:00"
+    },
+    "2": {
+      "_id": 2,
+      "name": "Weekly Gathering",
+      "description": "Regular weekly gathering",
+      "date": "2024-06-02T11:00:00",
+      "location": "Community Center",
+      "activity_type": "gathering",
+      "status": "completed",
+      "requires_registration": false,
+      "is_free": true,
+      "fee": 0.00,
+      "estimated_head_count": 30,
+      "actual_head_count": 28,
+      "created_at": "2024-05-01T10:00:00",
+      "updated_at": "2024-06-02T15:00:00"
+    }
+  },
+  "people": {
+    "1": {
+      "_id": 1,
+      "first_name": "Alice",
+      "last_name": "Johnson",
+      "email": "alice.johnson@example.com",
+      "phone": "555-0101",
+      "notes": "Vegetarian meals required",
+      "is_active": true,
+      "created_at": "2024-01-05T12:00:00",
+      "updated_at": "2024-01-05T12:00:00"
+    },
+    "2": {
+      "_id": 2,
+      "first_name": "Bob",
+      "last_name": "Smith",
+      "email": "bob.smith@example.com",
+      "phone": "555-0102",
+      "is_active": true,
+      "created_at": "2024-01-06T12:00:00",
+      "updated_at": "2024-01-06T12:00:00"
+    },
+    "3": {
+      "_id": 3,
+      "first_name": "Carol",
+      "last_name": "Williams",
+      "email": "carol.williams@example.com",
+      "phone": "555-0103",
+      "notes": "Worship team leader",
+      "is_active": true,
+      "created_at": "2024-01-07T12:00:00",
+      "updated_at": "2024-01-07T12:00:00"
+    }
+  },
+  "attendees": {
+    "1": {
+      "_id": 1,
+      "activity_id": 1,
+      "person_id": 1,
+      "role": "participant",
+      "payment_status": "paid",
+      "payment_amount": 75.00,
+      "payment_date": "2024-01-15T14:30:00",
+      "registration_date": "2024-01-12T10:00:00"
+    },
+    "2": {
+      "_id": 2,
+      "activity_id": 1,
+      "person_id": 2,
+      "role": "volunteer",
+      "payment_status": "waived",
+      "payment_amount": 0.00,
+      "payment_date": "2024-01-16T09:00:00",
+      "registration_date": "2024-01-13T11:00:00",
+      "notes": "Helping with setup and teardown"
+    },
+    "3": {
+      "_id": 3,
+      "activity_id": 1,
+      "person_id": 3,
+      "role": "worship_team",
+      "payment_status": "waived",
+      "payment_amount": 0.00,
+      "payment_date": "2024-01-16T09:00:00",
+      "registration_date": "2024-01-14T15:00:00",
+      "notes": "Leading worship sessions"
+    }
+  }
+}
