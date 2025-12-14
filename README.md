@@ -75,7 +75,7 @@ event-tracker-go/
 ├── migrations/        # SQL migration files
 ├── data/              # Database files
 ├── logs/              # Log files
-└── Makefile           # Build automation
+└── Taskfile.yml       # Build automation
 ```
 
 ## Getting Started
@@ -85,6 +85,7 @@ event-tracker-go/
 - Go 1.23 or later
 - macOS, Linux, or Windows
 - SQLite 3 (included with go-sqlite3)
+- [Task](https://taskfile.dev) command runner (`brew install go-task/tap/go-task` on macOS)
 
 ### Installation
 
@@ -96,17 +97,17 @@ cd event-tracker-go
 
 2. Install dependencies:
 ```fish
-make deps
+task deps
 ```
 
 3. Run database migrations:
 ```fish
-make migrate
+task migrate
 ```
 
 4. Build the application:
 ```fish
-make build
+task build
 ```
 
 ### Running the Application
@@ -115,8 +116,8 @@ make build
 # Run the GUI application
 ./bin/event-tracker
 
-# Or use make
-make run
+# Or use task
+task run
 
 # The application will:
 # 1. Load configuration
@@ -139,45 +140,45 @@ make run
 
 ```fish
 # Run migrations
-make migrate
+task migrate
 
 # Show database statistics
 ./bin/migrate -cmd stats
 
 # Reset database (WARNING: deletes all data)
-make db-reset
+task db-reset
 
 # Backup database
-make db-backup
+task db-backup
 ```
 
 ## Development
 
-### Available Make Targets
+### Available Tasks
 
 ```fish
-make help           # Show all available targets
-make build          # Build application binaries
-make test           # Run tests with coverage
-make run            # Run the application
-make migrate        # Run database migrations
-make clean          # Clean build artifacts
-make deps           # Download dependencies
-make fmt            # Format code
-make vet            # Run go vet
-make lint           # Run formatters and linters
-make build-all      # Build for all platforms
-make bundle-macos   # Create macOS app bundle
+task --list         # Show all available tasks
+task build          # Build application binaries
+task test           # Run tests with coverage
+task run            # Run the application
+task migrate        # Run database migrations
+task clean          # Clean build artifacts
+task deps           # Download dependencies
+task fmt            # Format code
+task vet            # Run go vet
+task lint           # Run formatters and linters
+task build-all      # Build for all platforms
+task bundle-macos   # Create macOS app bundle
 ```
 
 ### Running Tests
 
 ```fish
 # Run all tests with coverage
-make test
+task test
 
 # Run tests without coverage
-make test-short
+task test-short
 ```
 
 ### Database Schema
@@ -271,7 +272,7 @@ Attendees:
 - [x] Database connection
 - [x] Configuration management
 - [x] Logging setup
-- [x] Build system (Makefile)
+- [x] Build system (Taskfile)
 - [x] Migration runner
 
 ### Phase 2: Domain Models ✅ COMPLETE

@@ -1,0 +1,189 @@
+version: '3'
+
+vars:
+  BINARY_NAME: event-tracker
+  MIGRATE_NAME: migrate
+  VERSION: 0.1.0
+  BUILD_DIR: bin
+  DIST_DIR: dist
+  COVERAGE_FILE: coverage.out
+  BUILD_DATE:
+    sh: date -u +"%Y-%m-%dT%H:%M:%SZ"
+  GIT_COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo dev
+  LDFLAGS: '-ldflags "-X main.version={{.VERSION}} -X main.buildDate={{.BUILD_DATE}} -X main.gitCommit={{.GIT_COMMIT}}"'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  info:
+    desc: Display project information
+    cmds:
+      - |
+        echo "Project: {{.BINARY_NAME}}"
+        echo "Version: {{.VERSION}}"
+        echo "Build Date: {{.BUILD_DATE}}"
+        echo "Git Commit: {{.GIT_COMMIT}}"
+        echo "Go version: $(go version)"
+        echo "Build directory: {{.BUILD_DIR}}"
+        echo "Dist directory: {{.DIST_DIR}}"
+
+  deps:
+    desc: Download and verify dependencies
+    cmds:
+      - go mod download
+      - go mod verify
+
+  tidy:
+    desc: Tidy go.mod and go.sum
+    cmds:
+      - go mod tidy
+
+  fmt:
+    desc: Format Go code
+    cmds:
+      - go fmt ./...
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  lint:
+    desc: Run formatters and linters
+    deps:
+      - fmt
+      - vet
+    cmds:
+      - echo "Linting complete!"
+
+  build:
+    desc: Build the application binaries
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - echo "Building {{.BINARY_NAME}}..."
+      - go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}} ./cmd/app
+      - echo "Building {{.MIGRATE_NAME}}..."
+      - go build -o {{.BUILD_DIR}}/{{.MIGRATE_NAME}} ./cmd/migrate
+      - echo "Build complete!"
+
+  build-all:
+    desc: Build binaries for all supported platforms
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - GOOS=darwin GOARCH=amd64 go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}}-darwin-amd64 ./cmd/app
+      - GOOS=darwin GOARCH=arm64 go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}}-darwin-arm64 ./cmd/app
+      - GOOS=linux GOARCH=amd64 go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}}-linux-amd64 ./cmd/app
+      - GOOS=windows GOARCH=amd64 go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}}-windows-amd64.exe ./cmd/app
+      - echo "Cross-compilation complete!"
+
+  build-macos:
+    desc: Build the macOS (ARM64) binary
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - GOOS=darwin GOARCH=arm64 go build -o {{.BUILD_DIR}}/{{.BINARY_NAME}}-darwin-arm64 ./cmd/app
+      - echo "Build complete!"
+
+  bundle-macos:
+    desc: Create macOS app bundle
+    deps:
+      - build-macos
+    cmds:
+      - ./scripts/bundle-macos.fish
+      - echo "Bundle complete!"
+
+  build-release:
+    desc: Build release binaries with version info
+    cmds:
+      - |
+        echo "Building v{{.VERSION}} for $(go env GOOS)/$(go env GOARCH)..."
+      - mkdir -p {{.DIST_DIR}}
+      - |
+        echo "Building for $(go env GOOS)-$(go env GOARCH)..."
+      - go build {{.LDFLAGS}} -o {{.DIST_DIR}}/{{.BINARY_NAME}}-$(go env GOOS)-$(go env GOARCH) ./cmd/app
+      - |
+        echo "✓ Build complete: {{.DIST_DIR}}/{{.BINARY_NAME}}-$(go env GOOS)-$(go env GOARCH)"
+      - echo ""
+      - echo "For other platforms, build on native systems or use platform-specific containers."
+
+  package-release:
+    desc: Package the release artifacts
+    deps:
+      - build-release
+      - bundle-macos
+    cmds:
+      - cd {{.DIST_DIR}} && tar -czf {{.BINARY_NAME}}-v{{.VERSION}}-$(go env GOOS)-$(go env GOARCH).tar.gz {{.BINARY_NAME}}-$(go env GOOS)-$(go env GOARCH)
+      - cd {{.DIST_DIR}} && zip -qr "Event-Tracker-v{{.VERSION}}-macOS.zip" "Event Tracker.app"
+      - ls -lh {{.DIST_DIR}}/*.tar.gz {{.DIST_DIR}}/*.zip 2>/dev/null || true
+
+  run:
+    desc: Run the GUI application
+    cmds:
+      - go run ./cmd/app
+
+  migrate:
+    desc: Run database migrations
+    cmds:
+      - mkdir -p data {{.BUILD_DIR}}
+      - |
+        if [ ! -f {{.BUILD_DIR}}/{{.MIGRATE_NAME}} ]; then
+          echo "Building migrate tool...";
+          go build -o {{.BUILD_DIR}}/{{.MIGRATE_NAME}} ./cmd/migrate;
+        fi
+      - ./{{.BUILD_DIR}}/{{.MIGRATE_NAME}} up
+
+  test:
+    desc: Run tests with coverage
+    cmds:
+      - go test -v -race -coverprofile={{.COVERAGE_FILE}} ./...
+      - go tool cover -html={{.COVERAGE_FILE}} -o coverage.html
+
+  test-short:
+    desc: Run tests without coverage
+    cmds:
+      - go test -v -short ./...
+
+  check:
+    desc: Run formatting, vetting, and full tests
+    cmds:
+      - task: fmt
+      - task: vet
+      - task: test
+
+  dev-setup:
+    desc: Set up development environment
+    deps:
+      - deps
+    cmds:
+      - mkdir -p data logs
+      - echo "Development environment ready!"
+
+  clean:
+    desc: Clean build artifacts and temporary files
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+      - rm -f {{.COVERAGE_FILE}} coverage.html
+      - rm -f data/*.db data/*.db-shm data/*.db-wal
+      - echo "Clean complete!"
+
+  db-reset:
+    desc: Reset the SQLite database (destructive)
+    cmds:
+      - rm -f data/events.db data/events.db-shm data/events.db-wal
+      - task: migrate
+      - echo "Database reset complete!"
+
+  db-backup:
+    desc: Backup the SQLite database
+    cmds:
+      - mkdir -p backups
+      - cp data/events.db backups/events-$(date +%Y%m%d-%H%M%S).db
+      - echo "Backup complete!"

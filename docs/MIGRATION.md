@@ -17,7 +17,7 @@ This guide explains how to migrate your data from the Python Event Tracker (whic
 cp ../event-tracker/data/events.json ../event-tracker/data/events.backup.json
 
 # 2. Build the migration tool
-make build
+task build
 
 # 3. Run the import
 ./bin/migrate -cmd import -source ../event-tracker/data/events.json
@@ -44,7 +44,7 @@ cp data/events.db data/events.backup.db 2>/dev/null || true
 
 ```fish
 # Build both the app and migration tool
-make build
+task build
 
 # Or build just the migration tool
 go build -o bin/migrate ./cmd/migrate
@@ -96,8 +96,8 @@ Idle:            1
 # Run the GUI application
 ./bin/event-tracker
 
-# Or use make
-make run
+# Or use task
+task run
 ```
 
 ## What Gets Migrated
@@ -310,7 +310,7 @@ To import only specific record types:
 To start fresh:
 ```fish
 # Reset database
-make db-reset
+task db-reset
 
 # Re-import
 ./bin/migrate -cmd import -source ../event-tracker/data/events.json
