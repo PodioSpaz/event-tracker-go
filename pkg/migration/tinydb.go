@@ -11,7 +11,7 @@ import (
 type TinyDBDocument struct {
 	Activities map[string]TinyDBActivity `json:"activities"`
 	People     map[string]TinyDBPerson   `json:"people"`
-	Attendees  map[string]TinyDBAttendee `json:"attendees"`
+	Attendees  map[string]TinyDBAttendee `json:"event_attendees"`
 }
 
 // TinyDBActivity represents an activity in TinyDB format

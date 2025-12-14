@@ -3,6 +3,7 @@ package migration
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/PodioSpaz/event-tracker-go/internal/repository"
 	"github.com/rs/zerolog/log"
@@ -106,6 +107,16 @@ func (i *Importer) importPeople(ctx context.Context, doc *TinyDBDocument, stats 
 	personIDMap := make(map[int]int64)
 
 	for id, tdbPerson := range doc.People {
+		// Parse the TinyDB document ID from JSON key
+		docID, err := strconv.Atoi(id)
+		if err != nil {
+			stats.PeopleFailed++
+			errMsg := fmt.Sprintf("Failed to parse person ID %s: %v", id, err)
+			stats.Errors = append(stats.Errors, errMsg)
+			log.Warn().Str("id", id).Err(err).Msg("Failed to parse person ID")
+			continue
+		}
+
 		// Map to domain model
 		person, err := i.mapper.MapPerson(&tdbPerson)
 		if err != nil {
@@ -139,7 +150,7 @@ func (i *Importer) importPeople(ctx context.Context, doc *TinyDBDocument, stats 
 				// Try to find existing person
 				existing, err := i.personRepo.FindByEmail(ctx, person.Email)
 				if err == nil && existing != nil {
-					personIDMap[tdbPerson.DocID] = existing.ID
+					personIDMap[docID] = existing.ID
 					stats.PeopleImported++
 					log.Info().Str("email", person.Email).Msg("Person already exists, using existing ID")
 					continue
@@ -157,7 +168,7 @@ func (i *Importer) importPeople(ctx context.Context, doc *TinyDBDocument, stats 
 		}
 
 		// Store ID mapping
-		personIDMap[tdbPerson.DocID] = person.ID
+		personIDMap[docID] = person.ID
 		stats.PeopleImported++
 
 		log.Debug().
@@ -177,6 +188,16 @@ func (i *Importer) importActivities(ctx context.Context, doc *TinyDBDocument, st
 	activityIDMap := make(map[int]int64)
 
 	for id, tdbActivity := range doc.Activities {
+		// Parse the TinyDB document ID from JSON key
+		docID, err := strconv.Atoi(id)
+		if err != nil {
+			stats.ActivitiesFailed++
+			errMsg := fmt.Sprintf("Failed to parse activity ID %s: %v", id, err)
+			stats.Errors = append(stats.Errors, errMsg)
+			log.Warn().Str("id", id).Err(err).Msg("Failed to parse activity ID")
+			continue
+		}
+
 		// Map to domain model
 		activity, err := i.mapper.MapActivity(&tdbActivity)
 		if err != nil {
@@ -206,7 +227,7 @@ func (i *Importer) importActivities(ctx context.Context, doc *TinyDBDocument, st
 		}
 
 		// Store ID mapping
-		activityIDMap[tdbActivity.DocID] = activity.ID
+		activityIDMap[docID] = activity.ID
 		stats.ActivitiesImported++
 
 		log.Debug().
