@@ -41,7 +41,7 @@ func TestTinyDBParser_ParseData(t *testing.T) {
 					"updated_at": "2024-01-01T00:00:00"
 				}
 			},
-			"attendees": {
+			"event_attendees": {
 				"1": {
 					"_id": 1,
 					"activity_id": 1,
@@ -67,7 +67,7 @@ func TestTinyDBParser_ParseData(t *testing.T) {
 		jsonData := []byte(`{
 			"activities": {},
 			"people": {},
-			"attendees": {}
+			"event_attendees": {}
 		}`)
 
 		doc, err := parser.ParseData(jsonData)
