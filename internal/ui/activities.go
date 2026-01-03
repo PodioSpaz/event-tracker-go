@@ -97,20 +97,23 @@ func (v *ActivitiesView) createActivitiesTable(activities []*domain.Activity) fy
 			// Header row styling
 			if id.Row == 0 {
 				label.TextStyle = fyne.TextStyle{Bold: true}
-				label.Text = data[id.Row][id.Col]
+				label.SetText(data[id.Row][id.Col])
 				return
 			}
 
 			// Action column
 			if id.Col == 6 {
 				// We'll show just text for now, buttons in tables are complex in Fyne
-				label.Text = "→"
+				label.SetText("→")
 				return
 			}
 
-			label.Text = data[id.Row][id.Col]
+			label.SetText(data[id.Row][id.Col])
 		},
 	)
+
+	// Refresh table to ensure initial render with data
+	table.Refresh()
 
 	// Set column widths
 	table.SetColumnWidth(0, 200) // Name
