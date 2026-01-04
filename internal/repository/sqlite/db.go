@@ -16,6 +16,33 @@ type DB struct {
 	*sql.DB
 }
 
+type txContextKey struct{}
+
+type sqlExecutor interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+}
+
+func contextWithTx(ctx context.Context, tx *sql.Tx) context.Context {
+	return context.WithValue(ctx, txContextKey{}, tx)
+}
+
+func txFromContext(ctx context.Context) *sql.Tx {
+	if ctx == nil {
+		return nil
+	}
+	tx, _ := ctx.Value(txContextKey{}).(*sql.Tx)
+	return tx
+}
+
+func (db *DB) getExecutor(ctx context.Context) sqlExecutor {
+	if tx := txFromContext(ctx); tx != nil {
+		return tx
+	}
+	return db.DB
+}
+
 // New creates a new database connection
 func New(dbPath string) (*DB, error) {
 	// Ensure the directory exists
@@ -110,9 +137,13 @@ func (db *DB) GetStats() sql.DBStats {
 }
 
 // WithTransaction executes a function within a transaction
-// If the function returns an error, the transaction is rolled back
-// Otherwise, the transaction is committed
+// If the function returns an error, the transaction is rolled back.
+// Nested transactions reuse the existing transaction in the context.
 func (db *DB) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	if existingTx := txFromContext(ctx); existingTx != nil {
+		return fn(ctx)
+	}
+
 	tx, err := db.BeginTx(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -127,7 +158,8 @@ func (db *DB) WithTransaction(ctx context.Context, fn func(ctx context.Context) 
 	}()
 
 	// Execute the function
-	if err := fn(ctx); err != nil {
+	txCtx := contextWithTx(ctx, tx)
+	if err := fn(txCtx); err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
 			log.Error().Err(rbErr).Msg("Failed to rollback transaction")
 		}
@@ -140,4 +172,19 @@ func (db *DB) WithTransaction(ctx context.Context, fn func(ctx context.Context) 
 	}
 
 	return nil
+}
+
+// ExecContext executes the query using the transaction in ctx if one exists.
+func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	return db.getExecutor(ctx).ExecContext(ctx, query, args...)
+}
+
+// QueryContext executes the query using the transaction in ctx if one exists.
+func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	return db.getExecutor(ctx).QueryContext(ctx, query, args...)
+}
+
+// QueryRowContext executes the query using the transaction in ctx if one exists.
+func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	return db.getExecutor(ctx).QueryRowContext(ctx, query, args...)
 }
