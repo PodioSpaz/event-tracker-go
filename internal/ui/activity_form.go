@@ -35,6 +35,9 @@ type ActivityForm struct {
 
 	// Form container
 	formContainer *fyne.Container
+
+	// Dialog reference for closing
+	dialog dialog.Dialog
 }
 
 // NewActivityForm creates a new activity form
@@ -216,7 +219,10 @@ func (f *ActivityForm) updateFormVisibility() {
 		f.capacityEntry.Enable()
 	}
 
-	f.formContainer.Refresh()
+	// Only refresh if form container has been built
+	if f.formContainer != nil {
+		f.formContainer.Refresh()
+	}
 }
 
 // Render renders the form in a dialog
@@ -231,8 +237,7 @@ func (f *ActivityForm) Show(parentWindow fyne.Window) {
 	scrollForm.SetMinSize(fyne.NewSize(500, 600))
 
 	// Create dialog with save and cancel buttons
-	var formDialog dialog.Dialog
-	formDialog = dialog.NewCustomConfirm(
+	f.dialog = dialog.NewCustomConfirm(
 		title,
 		"Save",
 		"Cancel",
@@ -245,8 +250,8 @@ func (f *ActivityForm) Show(parentWindow fyne.Window) {
 		parentWindow,
 	)
 
-	formDialog.Resize(fyne.NewSize(550, 700))
-	formDialog.Show()
+	f.dialog.Resize(fyne.NewSize(550, 700))
+	f.dialog.Show()
 }
 
 // handleSave validates and saves the activity
@@ -324,7 +329,6 @@ func (f *ActivityForm) handleSave() {
 		}
 
 		log.Info().Str("name", activity.Name).Msg("Activity created successfully")
-		dialog.ShowInformation("Success", "Activity created successfully", f.app.mainWindow)
 	} else {
 		// Update existing activity
 		f.activity.Name = f.nameEntry.Text
@@ -352,7 +356,6 @@ func (f *ActivityForm) handleSave() {
 		}
 
 		log.Info().Str("name", f.activity.Name).Msg("Activity updated successfully")
-		dialog.ShowInformation("Success", "Activity updated successfully", f.app.mainWindow)
 	}
 
 	// Call onSave callback to refresh the view

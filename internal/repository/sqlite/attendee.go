@@ -274,11 +274,11 @@ func (r *AttendeeRepository) GetPaymentSummary(ctx context.Context, activityID i
 	query := `
 		SELECT
 			COUNT(*) as total,
-			SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as paid_count,
-			SUM(CASE WHEN payment_status = 'unpaid' THEN 1 ELSE 0 END) as unpaid_count,
-			SUM(CASE WHEN payment_status = 'waived' THEN 1 ELSE 0 END) as waived_count,
-			SUM(CASE WHEN payment_status = 'paid' THEN CAST(payment_amount AS REAL) ELSE 0 END) as paid_amount,
-			SUM(CASE WHEN payment_status = 'unpaid' THEN CAST(payment_amount AS REAL) ELSE 0 END) as unpaid_amount
+			COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END), 0) as paid_count,
+			COALESCE(SUM(CASE WHEN payment_status = 'unpaid' THEN 1 ELSE 0 END), 0) as unpaid_count,
+			COALESCE(SUM(CASE WHEN payment_status = 'waived' THEN 1 ELSE 0 END), 0) as waived_count,
+			COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN CAST(payment_amount AS REAL) ELSE 0 END), 0) as paid_amount,
+			COALESCE(SUM(CASE WHEN payment_status = 'unpaid' THEN CAST(payment_amount AS REAL) ELSE 0 END), 0) as unpaid_amount
 		FROM attendees
 		WHERE activity_id = ?
 	`
